@@ -33,6 +33,33 @@ jobs:
             echo "::endgroup::"
           done
 
+      # Until the version the checks ask for is on pub.dev, Spring for Dart
+      # comes from its repository (SPRING_REF, main by default); once it is
+      # released, from pub.dev again, with no change here.
+      - name: Spring for Dart before its release
+        working-directory: checks
+        env:
+          SPRING_REF: ${{ vars.SPRING_REF || 'main' }}
+        run: |
+          set -e
+          version=$(grep -oE 'spring_boot_starter_flutter: \^[0-9.]+' pubspec.yaml | grep -oE '[0-9.]+$')
+          if curl -sf "https://pub.dev/api/packages/spring_boot_starter_flutter/versions/$version" > /dev/null; then
+            echo "spring_boot_starter_flutter $version is on pub.dev"
+            exit 0
+          fi
+          echo "spring_boot_starter_flutter $version is not released: farum-azula/spring_core_dart@$SPRING_REF"
+          {
+            echo 'dependency_overrides:'
+            for package in spring_core_dart spring_boot_dart spring_web_dart spring_boot_starter_logging spring_boot_starter_flutter; do
+              echo "  $package:"
+              echo '    git:'
+              echo '      url: https://github.com/farum-azula/spring_core_dart.git'
+              echo "      path: $package"
+              echo "      ref: $SPRING_REF"
+            done
+          } > pubspec_overrides.yaml
+          cat pubspec_overrides.yaml
+
       - name: Check the theme files
         working-directory: checks
         run: |
