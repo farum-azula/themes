@@ -23,7 +23,7 @@ A theme file is downloaded by the app, for every theme with `source` on
 spring:
   flutter:
     theme:
-      source: github:farum-azula/themes/themes/code.yml@code-v0.1.0
+      source: github:farum-azula/themes/themes/code.yml@code-v0.2.0
 ```
 
 `checks/` tests them against `spring_boot_starter_flutter`.
