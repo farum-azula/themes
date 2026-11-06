@@ -1,50 +1,96 @@
 name: Release
 
+run-name: Release ${{ inputs.package }} (${{ inputs.bump }})
+
 on:
-  push:
-    tags: ['*-v*']
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'The package, a folder of packages/ (neon_ui)'
+        type: string
+        required: true
+      bump:
+        description: 'Version bump: major (0.2.0 → 1.0.0), minor (0.2.0 → 0.3.0) or patch (0.2.0 → 0.2.1)'
+        type: choice
+        required: true
+        default: choose
+        options:
+          - choose
+          - major
+          - minor
+          - patch
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   check:
+    name: CI
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
   release:
-    name: Release
+    name: Bump, tag and release
     needs: check
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
-      - name: The tag names a package and its version
-        id: tag
+
+      - name: The new version
+        id: version
+        env:
+          PACKAGE: ${{ inputs.package }}
+          BUMP: ${{ inputs.bump }}
         run: |
-          tag="${GITHUB_REF_NAME}"
-          package="${tag%-v*}"
-          version="${tag##*-v}"
-          pubspec="packages/$package/pubspec.yaml"
-          test -f "$pubspec" || { echo "::error::No package $package"; exit 1; }
-          declared="$(sed -n 's/^version: *//p' "$pubspec")"
-          test "$declared" = "$version" || {
-            echo "::error::$pubspec has version $declared, the tag says $version"
-            exit 1
-          }
-          echo "package=$package" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          pubspec="packages/$PACKAGE/pubspec.yaml"
+          test -f "$pubspec" || { echo "::error::No package packages/$PACKAGE"; exit 1; }
+          current="$(sed -n 's/^version: *//p' "$pubspec")"
+          IFS=. read -r major minor patch <<< "${current%%+*}"
+          case "$BUMP" in
+            major) next="$((major + 1)).0.0" ;;
+            minor) next="$major.$((minor + 1)).0" ;;
+            patch) next="$major.$minor.$((patch + 1))" ;;
+            *) echo "::error::Choose major, minor or patch"; exit 1 ;;
+          esac
+          tag="$PACKAGE-v$next"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "::error::The tag $tag exists"; exit 1
+          fi
+          sed -i "s/^version: .*/version: $next/" "$pubspec"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and tag
+        env:
+          PACKAGE: ${{ inputs.package }}
+          NEXT: ${{ steps.version.outputs.next }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -am "chore(release): $PACKAGE $NEXT"
+          git tag "$TAG"
+          git push origin HEAD:main "$TAG"
+
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          PACKAGE: ${{ inputs.package }}
+          NEXT: ${{ steps.version.outputs.next }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "${{ steps.tag.outputs.package }} ${{ steps.tag.outputs.version }}" \
-            --notes "Use it with:
-
-          \`\`\`yaml
-          dependencies:
-            ${{ steps.tag.outputs.package }}:
-              git:
-                url: https://github.com/${{ github.repository }}.git
-                path: packages/${{ steps.tag.outputs.package }}
-                ref: $GITHUB_REF_NAME
-          \`\`\`"
+          notes="$(printf '%s\n' \
+            'dependencies:' \
+            "  $PACKAGE:" \
+            '    git:' \
+            "      url: https://github.com/$GITHUB_REPOSITORY.git" \
+            "      path: packages/$PACKAGE" \
+            "      ref: $TAG")"
+          gh release create "$TAG" --title "$PACKAGE $NEXT" --generate-notes \
+            --notes "$(printf '```yaml\n%s\n```' "$notes")"

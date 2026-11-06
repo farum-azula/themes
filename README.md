@@ -29,14 +29,11 @@ dependencies:
 
 ## Releases
 
-A package is released by a tag `<package>-v<version>` whose version is the
-one in its `pubspec.yaml`: CI checks every package, then a GitHub release
-is made for the tag. Apps pin the tag in `ref:`.
-
-```bash
-git tag neon_ui-v0.2.0
-git push origin neon_ui-v0.2.0
-```
+Actions → **Release** → Run workflow, with the package (`neon_ui`) and
+the bump: `major`, `minor` or `patch`. CI checks every package; then the
+version in the package's `pubspec.yaml` is raised, committed to `main`,
+tagged `<package>-v<version>` and published as a GitHub release. Apps pin
+the tag in `ref:`.
 
 Nothing here is published on pub.dev.
 
