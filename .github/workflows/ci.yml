@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+jobs:
+  packages:
+    name: Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Flutter
+        run: |
+          git clone https://github.com/flutter/flutter.git --branch stable --depth 1 "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Check every package
+        run: |
+          set -e
+          for package in packages/*/; do
+            echo "::group::$package"
+            (
+              cd "$package"
+              flutter pub get
+              dart format --output=none --set-exit-if-changed lib test
+              flutter analyze --fatal-infos
+              dart run build_runner build
+              git diff --exit-code -- lib/spring_gen
+              flutter test
+            )
+            echo "::endgroup::"
+          done

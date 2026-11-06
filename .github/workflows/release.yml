@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags: ['*-v*']
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Release
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: The tag names a package and its version
+        id: tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          package="${tag%-v*}"
+          version="${tag##*-v}"
+          pubspec="packages/$package/pubspec.yaml"
+          test -f "$pubspec" || { echo "::error::No package $package"; exit 1; }
+          declared="$(sed -n 's/^version: *//p' "$pubspec")"
+          test "$declared" = "$version" || {
+            echo "::error::$pubspec has version $declared, the tag says $version"
+            exit 1
+          }
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "${{ steps.tag.outputs.package }} ${{ steps.tag.outputs.version }}" \
+            --notes "Use it with:
+
+          \`\`\`yaml
+          dependencies:
+            ${{ steps.tag.outputs.package }}:
+              git:
+                url: https://github.com/${{ github.repository }}.git
+                path: packages/${{ steps.tag.outputs.package }}
+                ref: $GITHUB_REF_NAME
+          \`\`\`"
