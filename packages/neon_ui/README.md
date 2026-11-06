@@ -14,7 +14,7 @@ none`); apps take it from this repository. The app that shows it is
 dependencies:
   neon_ui:
     git:
-      url: https://github.com/farum-azula/thems.git
+      url: https://github.com/farum-azula/themes.git
       path: packages/neon_ui
       ref: neon_ui-v0.2.0
 ```
