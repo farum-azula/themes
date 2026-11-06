@@ -10,6 +10,24 @@ read it.
 | [`packages/`](packages/) | Flutter libraries: widgets, fonts, pictures and the theme files they ship |
 | [`themes/`](themes/) | Theme files alone (`*.yml`), to import into an app |
 
+## Theme files
+
+| File | What |
+|---|---|
+| [`themes/code.yml`](themes/code.yml) | The languages of code blocks (`syntax.*`): Dart, Java, YAML, properties, shell, JSON |
+
+A theme file is downloaded by the app, for every theme with `source` on
+`spring.flutter.theme`, or as one theme with `themes.<name>.source`:
+
+```yaml
+spring:
+  flutter:
+    theme:
+      source: github:farum-azula/themes/themes/code.yml@code-v0.1.0
+```
+
+`checks/` tests them against `spring_boot_starter_flutter`.
+
 ## Packages
 
 | Package | What |
@@ -29,11 +47,12 @@ dependencies:
 
 ## Releases
 
-Actions → **Release** → Run workflow, with the package (`neon_ui`) and
-the bump: `major`, `minor` or `patch`. CI checks every package; then the
-version in the package's `pubspec.yaml` is raised, committed to `main`,
-tagged `<package>-v<version>` and published as a GitHub release. Apps pin
-the tag in `ref:`.
+Actions → **Release** → Run workflow, with what to release (a package,
+`neon_ui`, or a theme file, `code`) and the bump: `major`, `minor` or
+`patch`. CI checks everything; then the version (the package's
+`pubspec.yaml`, or `themes/<name>.version`) is raised, committed to `main`,
+tagged `<name>-v<version>` and published as a GitHub release. Apps pin the
+tag: `ref:` of a package, `@<tag>` of a theme file.
 
 Nothing here is published on pub.dev.
 

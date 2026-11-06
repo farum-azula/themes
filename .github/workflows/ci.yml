@@ -32,3 +32,10 @@ jobs:
             )
             echo "::endgroup::"
           done
+
+      - name: Check the theme files
+        working-directory: checks
+        run: |
+          flutter pub get
+          flutter analyze --fatal-infos
+          flutter test

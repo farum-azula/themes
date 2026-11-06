@@ -479,6 +479,9 @@ final class AppStyleNeonButtonValues {
   /// `styles.neon-button.height`
   double get height => _values.number('height');
 
+  /// `styles.neon-button.padding`
+  EdgeInsets get padding => _values.insets('padding');
+
   /// `styles.neon-button.radius`
   double get radius => _values.number('radius');
 
@@ -513,6 +516,9 @@ final class AppStyleNeonButtonOutlineValues {
 
   /// `styles.neon-button-outline.height`
   double get height => _values.number('height');
+
+  /// `styles.neon-button-outline.padding`
+  EdgeInsets get padding => _values.insets('padding');
 
   /// `styles.neon-button-outline.radius`
   double get radius => _values.number('radius');

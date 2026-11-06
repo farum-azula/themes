@@ -155,6 +155,7 @@ spring:
             # A filled button: lighter on hover and focus.
             neon-button:
               height: 42
+              padding: [24, 0]
               radius: $shape.extra-small
               border-width: $neon.border-width
               fill:
@@ -169,6 +170,7 @@ spring:
             # The same, outlined.
             neon-button-outline:
               height: 42
+              padding: [24, 0]
               radius: $shape.extra-small
               border-width: $neon.border-width
               fill: { default: transparent, pressed: { color: $colors.primary, alpha: 12% } }

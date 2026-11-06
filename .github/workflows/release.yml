@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       package:
-        description: 'The package, a folder of packages/ (neon_ui)'
+        description: 'What to release: a package of packages/ (neon_ui) or a theme file of themes/ (code)'
         type: string
         required: true
       bump:
@@ -48,9 +48,15 @@ jobs:
           PACKAGE: ${{ inputs.package }}
           BUMP: ${{ inputs.bump }}
         run: |
-          pubspec="packages/$PACKAGE/pubspec.yaml"
-          test -f "$pubspec" || { echo "::error::No package packages/$PACKAGE"; exit 1; }
-          current="$(sed -n 's/^version: *//p' "$pubspec")"
+          if [ -f "packages/$PACKAGE/pubspec.yaml" ]; then
+            file="packages/$PACKAGE/pubspec.yaml"
+            current="$(sed -n 's/^version: *//p' "$file")"
+          elif [ -f "themes/$PACKAGE.version" ]; then
+            file="themes/$PACKAGE.version"
+            current="$(tr -d '[:space:]' < "$file")"
+          else
+            echo "::error::No package packages/$PACKAGE and no theme themes/$PACKAGE.yml"; exit 1
+          fi
           IFS=. read -r major minor patch <<< "${current%%+*}"
           case "$BUMP" in
             major) next="$((major + 1)).0.0" ;;
@@ -62,7 +68,11 @@ jobs:
           if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
             echo "::error::The tag $tag exists"; exit 1
           fi
-          sed -i "s/^version: .*/version: $next/" "$pubspec"
+          if [ "${file##*.}" = "version" ]; then
+            echo "$next" > "$file"
+          else
+            sed -i "s/^version: .*/version: $next/" "$file"
+          fi
           echo "next=$next" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
@@ -85,12 +95,20 @@ jobs:
           NEXT: ${{ steps.version.outputs.next }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
-          notes="$(printf '%s\n' \
-            'dependencies:' \
-            "  $PACKAGE:" \
-            '    git:' \
-            "      url: https://github.com/$GITHUB_REPOSITORY.git" \
-            "      path: packages/$PACKAGE" \
-            "      ref: $TAG")"
+          if [ -f "themes/$PACKAGE.version" ]; then
+            notes="$(printf '%s\n' \
+              'spring:' \
+              '  flutter:' \
+              '    theme:' \
+              "      source: github:$GITHUB_REPOSITORY/themes/$PACKAGE.yml@$TAG")"
+          else
+            notes="$(printf '%s\n' \
+              'dependencies:' \
+              "  $PACKAGE:" \
+              '    git:' \
+              "      url: https://github.com/$GITHUB_REPOSITORY.git" \
+              "      path: packages/$PACKAGE" \
+              "      ref: $TAG")"
+          fi
           gh release create "$TAG" --title "$PACKAGE $NEXT" --generate-notes \
             --notes "$(printf '```yaml\n%s\n```' "$notes")"

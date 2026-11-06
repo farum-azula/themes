@@ -22,6 +22,7 @@ class NeonButton extends StatelessWidget {
     final theme = context.theme;
     final text = theme.typography.labelLarge;
     Widget face(
+      EdgeInsets padding,
       double height,
       double radius,
       Color fill,
@@ -30,6 +31,7 @@ class NeonButton extends StatelessWidget {
       Color color,
     ) => Container(
       height: height,
+      padding: padding,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: fill,
@@ -43,6 +45,7 @@ class NeonButton extends StatelessWidget {
             style: theme.styles.neonButton,
             onPressed: onPressed,
             builder: (context, s) => face(
+              s.padding,
               s.height,
               s.radius,
               s.fill,
@@ -55,6 +58,7 @@ class NeonButton extends StatelessWidget {
             style: theme.styles.neonButtonOutline,
             onPressed: onPressed,
             builder: (context, s) => face(
+              s.padding,
               s.height,
               s.radius,
               s.fill,
