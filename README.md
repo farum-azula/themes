@@ -5,6 +5,9 @@ Themes and design systems for
 the look of an app written in YAML, and the libraries of widgets that
 read it.
 
+**Documentation:** [farum-azula.org](https://farum-azula.org), the site of
+Spring for Dart (built with `neon_ui` and `themes/code.yml` from here).
+
 | Folder | What |
 |---|---|
 | [`packages/`](packages/) | Flutter libraries: widgets, fonts, pictures and the theme files they ship |
