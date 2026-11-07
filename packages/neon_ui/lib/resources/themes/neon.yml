@@ -130,6 +130,35 @@ spring:
               pid: '#C77DFF'
               logger: '#4FD8E8'
 
+          # -------------------------------------------------- components
+          # Flutter's own widgets in the look of the panels and buttons: a
+          # menu (MenuAnchor, DropdownMenu) is a dark panel with a thin
+          # border and square corners; its items are the buttons' labels.
+          components:
+            menu:
+              background-color: $colors.surface-container-lowest
+              surface-tint-color: transparent
+              shadow-color: transparent
+              elevation: 0
+              padding: { horizontal: 0, vertical: 4 }
+              side: { color: $colors.outline, width: $neon.border-width }
+              shape: $shape.extra-small
+            menu-button:
+              text-style: label-large
+              foreground-color:
+                default: $colors.on-surface
+                hovered: $colors.primary
+                focused: $colors.primary
+                disabled: { color: $colors.on-surface, alpha: 40% }
+              background-color:
+                default: transparent
+                hovered: { color: $colors.primary, alpha: 10% }
+                focused: { color: $colors.primary, alpha: 10% }
+              overlay-color: transparent
+              padding: { horizontal: 16, vertical: 0 }
+              minimum-size: { width: 0, height: 40 }
+              shape: $shape.extra-small
+
           # ------------------------------------------------------ styles
           # What the widgets look like per state (ThemeStates). Precedence:
           # disabled > error > pressed > hovered > focused > selected.
